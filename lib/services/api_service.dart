@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import '../lanjutan.dart';
+import '../models/vehicle_model.dart';
 
 class ApiService {
   // Base URL otomatis mendeteksi platform
