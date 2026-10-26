@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/vehicle_model.dart';
+import '../../../services/api_service.dart';
+import '../../auth/login_screen.dart';
 import '../../tracking/tracking_screen.dart';
 
 class AccountContent extends StatelessWidget {
@@ -290,7 +292,7 @@ class AccountContent extends StatelessWidget {
             height: 50,
             child: OutlinedButton.icon(
               onPressed: () {
-                Navigator.pop(context);
+                _showLogoutConfirmDialog(context);
               },
               icon: const Icon(Icons.logout_rounded, color: Colors.red),
               label: const Text(
@@ -310,6 +312,44 @@ class AccountContent extends StatelessWidget {
           ),
 
           const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Konfirmasi Keluar',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text('Apakah Anda yakin ingin keluar dari akun?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ApiService.token = null;
+              ApiService.currentUser = null;
+
+              // Kembali ke LoginPage dan bersihkan stack navigasi
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+              );
+            },
+            child: const Text('Keluar'),
+          ),
         ],
       ),
     );
