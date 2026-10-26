@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               const Text(
                 'Ubah URL backend jika Anda menguji di emulator atau HP fisik:',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -110,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 8),
               const Text(
                 '• Web/Desktop: http://localhost:3000\n• Android Emulator: http://10.0.2.2:3000\n• HP Fisik: http://<IP_KOMPUTER>:3000',
-                style: TextStyle(fontSize: 11, color: Colors.black54),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -388,11 +388,11 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               )
                             : const Text(
-                                'LOGIN',
+                                'Masuk',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
+                                  letterSpacing: 0.2,
                                 ),
                               ),
                       ),

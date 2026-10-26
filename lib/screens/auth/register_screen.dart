@@ -272,11 +272,11 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 )
                               : const Text(
-                                  'DAFTAR SEKARANG',
+                                  'Daftar Sekarang',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
+                                    letterSpacing: 0.2,
                                   ),
                                 ),
                         ),

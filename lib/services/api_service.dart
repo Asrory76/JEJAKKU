@@ -31,9 +31,7 @@ class ApiService {
         if (token != null) 'Authorization': 'Bearer $token',
       };
 
-  // ==========================================
-  // AUTHENTICATION
-  // ==========================================
+  // Authentication
 
   // POST /api/auth/login
 
@@ -90,9 +88,7 @@ class ApiService {
     }
   }
 
-  // ==========================================
-  // VEHICLE MANAGEMENT
-  // ==========================================
+  // Vehicle management
 
   // GET /api/vehicles
   static Future<List<Vehicle>> getVehicles() async {
@@ -150,9 +146,7 @@ class ApiService {
     return false;
   }
 
-  // ==========================================
-  // GPS TRACKING
-  // ==========================================
+  // GPS tracking
 
   // GET /api/positions/:vehicleId
   static Future<Map<String, dynamic>?> getLatestPosition(int vehicleId) async {

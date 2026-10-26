@@ -18,13 +18,7 @@ class _TrackingPageState extends State<TrackingPage> {
   static const LatLng jogjaDefault = LatLng(-7.7956, 110.3695);
   late final MapController _mapController;
 
-  List<LatLng> _route = [
-    const LatLng(-7.7819, 110.3671),
-    const LatLng(-7.7859, 110.3682),
-    const LatLng(-7.7904, 110.3691),
-    const LatLng(-7.7956, 110.3695),
-  ];
-
+  List<LatLng> _route = [];
   bool _isLoading = false;
   String _currentAddress = 'Yogyakarta, Indonesia';
 
@@ -32,6 +26,19 @@ class _TrackingPageState extends State<TrackingPage> {
   void initState() {
     super.initState();
     _mapController = MapController();
+
+    // Inisialisasi posisi terakhir dari data kendaraan jika tersedia
+    if (widget.vehicle.lastPosition != null) {
+      final lat = (widget.vehicle.lastPosition!['lat'] as num?)?.toDouble();
+      final lng = (widget.vehicle.lastPosition!['lng'] as num?)?.toDouble();
+      if (lat != null && lng != null) {
+        _route = [LatLng(lat, lng)];
+        if (widget.vehicle.lastPosition!['address'] != null) {
+          _currentAddress = widget.vehicle.lastPosition!['address'].toString();
+        }
+      }
+    }
+
     _fetchLiveTracking();
   }
 
@@ -40,24 +47,26 @@ class _TrackingPageState extends State<TrackingPage> {
     setState(() => _isLoading = true);
     try {
       final history = await ApiService.getPositionHistory(widget.vehicle.id!);
-      if (history.isNotEmpty && mounted) {
-        final List<LatLng> fetchedPoints = history.map((p) {
-          final lat = (p['lat'] as num).toDouble();
-          final lng = (p['lng'] as num).toDouble();
-          return LatLng(lat, lng);
-        }).toList();
+      if (mounted) {
+        if (history.isNotEmpty) {
+          final List<LatLng> fetchedPoints = history.map((p) {
+            final lat = (p['lat'] as num).toDouble();
+            final lng = (p['lng'] as num).toDouble();
+            return LatLng(lat, lng);
+          }).toList();
 
-        setState(() {
-          _route = fetchedPoints;
-          final last = history.last;
-          if (last['address'] != null && last['address'].toString().isNotEmpty) {
-            _currentAddress = last['address'].toString();
+          setState(() {
+            _route = fetchedPoints;
+            final last = history.last;
+            if (last['address'] != null && last['address'].toString().isNotEmpty) {
+              _currentAddress = last['address'].toString();
+            }
+          });
+
+          // Center map to latest position
+          if (_route.isNotEmpty) {
+            _mapController.move(_route.last, 14.5);
           }
-        });
-
-        // Center map to latest position
-        if (_route.isNotEmpty) {
-          _mapController.move(_route.last, 14.5);
         }
       }
     } catch (e) {
@@ -99,9 +108,7 @@ class _TrackingPageState extends State<TrackingPage> {
 
       body: Stack(
         children: [
-          // ======================================================
-          // MAP
-          // ======================================================
+          // Map
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -193,9 +200,42 @@ class _TrackingPageState extends State<TrackingPage> {
             ],
           ),
 
-          // ======================================================
-          // INFORMASI KENDARAAN DI BAWAH MAP
-          // ======================================================
+          // PEMBERITAHUAN EMPTY STATE KETIKA BELUM ADA KOORDINAT TERCATAT
+          if (_route.isEmpty && !_isLoading)
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.orange.shade300),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Belum ada koordinat rute GPS tersimpan untuk ${widget.vehicle.name}. Menampilkan peta referensi Yogyakarta.',
+                        style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Informasi kendaraan di bawah peta
           Positioned(
             left: 16,
             right: 16,
@@ -241,6 +281,7 @@ class _TrackingPageState extends State<TrackingPage> {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
+                            color: AppColors.textPrimary,
                           ),
                         ),
 
@@ -249,7 +290,7 @@ class _TrackingPageState extends State<TrackingPage> {
                         Text(
                           widget.vehicle.plate,
                           style: const TextStyle(
-                            color: Colors.grey,
+                            color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -270,7 +311,7 @@ class _TrackingPageState extends State<TrackingPage> {
                               child: Text(
                                 '• $_currentAddress',
                                 style: const TextStyle(
-                                  color: Colors.black54,
+                                  color: AppColors.textSecondary,
                                   fontSize: 11,
                                 ),
                                 overflow: TextOverflow.ellipsis,

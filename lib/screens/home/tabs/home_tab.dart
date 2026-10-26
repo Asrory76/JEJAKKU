@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../models/vehicle_model.dart';
 import '../../../services/api_service.dart';
+import '../widgets/home_quick_menu.dart';
 
 class HomeContent extends StatelessWidget {
   final Vehicle? vehicle;
@@ -17,12 +19,49 @@ class HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String userName = ApiService.currentUser?['name'] ??
+    final String userName =
+        ApiService.currentUser?['name'] ??
         ApiService.currentUser?['username'] ??
         '';
-    final String greeting = userName.isNotEmpty
-        ? 'Selamat Datang, $userName 👋'
-        : 'Selamat Datang 👋';
+
+    final hour = DateTime.now().hour;
+    String timeGreeting = 'Selamat Datang';
+    if (hour >= 4 && hour < 11) {
+      timeGreeting = 'Selamat Pagi';
+    } else if (hour >= 11 && hour < 15) {
+      timeGreeting = 'Selamat Siang';
+    } else if (hour >= 15 && hour < 18) {
+      timeGreeting = 'Selamat Sore';
+    } else {
+      timeGreeting = 'Selamat Malam';
+    }
+
+    final now = DateTime.now();
+    const days = [
+      'Minggu',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+    ];
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    final String dateString =
+        '${days[now.weekday % 7]}, ${now.day} ${months[now.month - 1]} ${now.year}';
 
     if (vehicle == null) {
       return SingleChildScrollView(
@@ -30,20 +69,12 @@ class HomeContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              greeting,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
+            _buildGreetingCard(
+              timeGreeting: timeGreeting,
+              userName: userName,
+              dateString: dateString,
+              hasVehicle: false,
             ),
-            const SizedBox(height: 5),
-            const Text(
-              'Pantau kendaraanmu dengan mudah dan aman.',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 25),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(26),
@@ -86,7 +117,10 @@ class HomeContent extends StatelessWidget {
                   const Text(
                     'Akun Anda belum memiliki kendaraan yang dipantau. Tambahkan armada pertama Anda sekarang.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 22),
                   SizedBox(
@@ -123,121 +157,173 @@ class HomeContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            greeting,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+          _buildGreetingCard(
+            timeGreeting: timeGreeting,
+            userName: userName,
+            dateString: dateString,
+            hasVehicle: true,
           ),
 
-          const SizedBox(height: 5),
-
-          const Text(
-            'Pantau kendaraanmu dengan mudah.',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-          ),
-
-          const SizedBox(height: 20),
-
-          // ======================================================
-          // STATUS KENDARAAN UTAMA
-          // ======================================================
-          GestureDetector(
-            onTap: onTrack,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.10),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
+          // Status kendaraan utama
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTrack,
+              borderRadius: BorderRadius.circular(22),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF063A45),
+                      AppColors.primary,
+                      Color(0xFF0F9BA8),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 55,
-                    height: 55,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.30),
+                      blurRadius: 16,
+                      offset: const Offset(0, 7),
                     ),
-                    child: Icon(
-                      currentVehicle.isMotor
-                          ? Icons.two_wheeler_rounded
-                          : Icons.directions_car_rounded,
-                      color: AppColors.primary,
-                      size: 32,
-                    ),
-                  ),
-
-                  const SizedBox(width: 15),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentVehicle.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.circle,
-                              color: Colors.greenAccent,
-                              size: 10,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Terhubung',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Icon(
+                        currentVehicle.isMotor
+                            ? Icons.two_wheeler_rounded
+                            : Icons.directions_car_rounded,
+                        color: AppColors.primary,
+                        size: 32,
+                      ),
                     ),
-                  ),
-
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ],
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            currentVehicle.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.22),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  currentVehicle.plate.isNotEmpty
+                                      ? currentVehicle.plate
+                                      : 'GPS AKTIF',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              const Text(
+                                'Terhubung',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white,
+                        size: 15,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
-          // ======================================================
-          // INFORMASI KENDARAAN (ODOMETER & BATERAI)
-          // ======================================================
-          const Text(
-            'Informasi Kendaraan',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+          // Menu fitur dan kontrol armada
+          HomeQuickMenu(vehicle: currentVehicle, onTrack: onTrack),
+
+          const SizedBox(height: 24),
+
+          // Informasi telemetri dan status sensor
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Status Sensor & Telemetri',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              Text(
+                'Real-time',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 12),
@@ -249,28 +335,44 @@ class HomeContent extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.08),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.speed_rounded,
+                      const Icon(
+                        Icons.gps_fixed_rounded,
                         color: AppColors.primary,
                         size: 28,
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Text(
-                        '12.450 KM',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                        currentVehicle.lastPosition != null
+                            ? '${(currentVehicle.lastPosition!['lat'] as num).toStringAsFixed(3)}, ${(currentVehicle.lastPosition!['lng'] as num).toStringAsFixed(3)}'
+                            : 'Standby',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Odometer',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Koordinat GPS',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -284,28 +386,44 @@ class HomeContent extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.08),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.battery_5_bar_rounded,
-                        color: Colors.green,
+                      const Icon(
+                        Icons.sensors_rounded,
+                        color: Color(0xFF2ECC71),
                         size: 28,
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Text(
-                        '86%',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                        currentVehicle.status == 'connected'
+                            ? 'GPS Aktif'
+                            : 'Terhubung',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Baterai',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Status Pelacak IoT',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -314,106 +432,125 @@ class HomeContent extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
-          // ======================================================
-          // LOKASI TERAKHIR
-          // ======================================================
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
+          // Lokasi terakhir kendaraan
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTrack,
               borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.grey.withValues(alpha: 0.08),
                   ),
-                  child: const Icon(
-                    Icons.location_on_rounded,
-                    color: AppColors.primary,
-                    size: 28,
-                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.location_on_rounded,
+                        color: AppColors.primary,
+                        size: 28,
+                      ),
+                    ),
 
-                const SizedBox(width: 14),
+                    const SizedBox(width: 14),
 
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Lokasi Terakhir',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Text(
+                                'Lokasi Terakhir',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: AppColors.success,
+                                size: 14,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            currentVehicle.lastPosition?['address'] ??
+                                'Jl. Malioboro, Yogyakarta',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          const Text(
+                            'Ketuk untuk membuka pelacakan langsung',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        currentVehicle.lastPosition?['address'] ??
-                            'Jl. Malioboro, Yogyakarta',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        'GPS Realtime Aktif',
-                        style: TextStyle(color: Colors.grey, fontSize: 11),
+                      child: const Icon(
+                        Icons.near_me_rounded,
+                        color: AppColors.primary,
+                        size: 20,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
-          // ======================================================
-          // TOMBOL LACAK
-          // ======================================================
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: onTrack,
-              icon: const Icon(Icons.location_searching_rounded),
-              label: const Text(
-                'Lacak Kendaraan',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 25),
-
-          // ======================================================
-          // SERVIS
-          // ======================================================
+          // Pengingat servis
           const Text(
             'Pengingat Servis',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
+              letterSpacing: -0.2,
             ),
           ),
 
@@ -425,6 +562,14 @@ class HomeContent extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -438,57 +583,56 @@ class HomeContent extends StatelessWidget {
                   child: const Icon(
                     Icons.build_rounded,
                     color: Colors.orange,
-                    size: 28,
+                    size: 26,
                   ),
                 ),
 
                 const SizedBox(width: 14),
 
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Servis berikutnya',
+                      const Text(
+                        'Jadwal Servis Berkala',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                           fontSize: 15,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 5),
+                      const SizedBox(height: 4),
                       Text(
-                        '550 KM lagi',
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                        'Rekomendasi ganti oli rutin untuk ${currentVehicle.name}',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Pada 13.000 KM',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
 
-                const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: AppColors.textMuted,
+                  size: 14,
+                ),
               ],
             ),
           ),
 
-          const SizedBox(height: 25),
+          const SizedBox(height: 22),
 
-          // ======================================================
-          // AKTIVITAS
-          // ======================================================
+          // Aktivitas terakhir
           const Text(
             'Aktivitas Terakhir',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
+              letterSpacing: -0.2,
             ),
           ),
 
@@ -500,45 +644,132 @@ class HomeContent extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Column(
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.route_rounded, color: AppColors.primary),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Perjalanan selesai',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Text(
-                      '10:42',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: 15),
-
-                Row(
-                  children: [
-                    Icon(Icons.location_on_outlined, color: Colors.grey),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Kendaraan berhenti di Jl. Kaliurang',
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
-                      ),
-                    ),
-                  ],
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
+            child: currentVehicle.lastPosition != null
+                ? Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_rounded, color: AppColors.primary),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Posisi Terkini GPS',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Text(
+                            currentVehicle.lastPosition?['updated_at'] != null
+                                ? currentVehicle.lastPosition!['updated_at'].toString().split('T').last.substring(0, 5)
+                                : 'Aktif',
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.near_me_outlined, color: AppColors.textMuted),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              currentVehicle.lastPosition?['address'] ?? 'Koordinat tersimpan',
+                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : const Row(
+                    children: [
+                      Icon(Icons.history_rounded, color: AppColors.textMuted),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Belum ada riwayat aktivitas pergerakan baru.',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
 
           const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGreetingCard({
+    required String timeGreeting,
+    required String userName,
+    required String dateString,
+    required bool hasVehicle,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_today_rounded,
+                size: 13,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                dateString,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            userName.isNotEmpty ? '$timeGreeting, $userName' : timeGreeting,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Pantau pergerakan & status armada Anda secara real-time.',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              height: 1.35,
+            ),
+          ),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../models/vehicle_model.dart';
 import '../../services/api_service.dart';
@@ -6,6 +7,8 @@ import '../tracking/tracking_screen.dart';
 import 'tabs/account_tab.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/search_tab.dart';
+import 'widgets/home_bottom_nav.dart';
+import 'widgets/home_header.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -57,7 +60,9 @@ class _HomePageState extends State<HomePage> {
           _vehicles.add(newVehicle);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Armada berhasil disimpan ke database!')),
+          const SnackBar(
+            content: Text('Armada berhasil disimpan ke database!'),
+          ),
         );
       }
     } catch (e) {
@@ -65,9 +70,8 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _vehicles.add(vehicle);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Tersimpan lokal: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Tersimpan lokal: $e')));
       }
     }
   }
@@ -169,75 +173,17 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // ======================================================
-            // HEADER JEJAKKU
-            // ======================================================
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(15),
-                  bottomRight: Radius.circular(15),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 45,
-                    height: 45,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.two_wheeler_rounded,
-                      color: AppColors.primary,
-                      size: 27,
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  const Text(
-                    'JEJAKKU',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  IconButton(
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(Icons.sync_rounded, color: Colors.white),
-                    tooltip: 'Sinkronkan Armada dari Server',
-                    onPressed: _isLoading ? null : _fetchVehicles,
-                  ),
-                ],
-              ),
+            // Header
+            HomeHeader(
+              selectedIndex: _selectedIndex,
+              isLoading: _isLoading,
+              onRefresh: _fetchVehicles,
+              onProfileTap: () {
+                setState(() => _selectedIndex = 2);
+              },
             ),
 
-            // ======================================================
-            // CONTENT TABS
-            // ======================================================
+            // Content tabs
             Expanded(
               child: IndexedStack(
                 index: _selectedIndex,
@@ -266,36 +212,14 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
-      // ======================================================
-      // BOTTOM NAVIGATION BAR
-      // ======================================================
-      bottomNavigationBar: BottomNavigationBar(
+      // Bottom navigation bar
+      bottomNavigationBar: HomeBottomNav(
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
             _selectedIndex = index;
           });
         },
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search_outlined),
-            activeIcon: Icon(Icons.search),
-            label: 'Cari',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Akun',
-          ),
-        ],
       ),
     );
   }

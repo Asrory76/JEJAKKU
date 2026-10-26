@@ -11,9 +11,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ==========================================
-// MIDDLEWARES
-// ==========================================
+// Middlewares
 
 // Enable CORS untuk Flutter Web & Mobile
 app.use(cors({
@@ -30,9 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 app.use(requestLogger);
 
-// ==========================================
-// ROUTES
-// ==========================================
+// Routes
 
 const authRoutes = require('./routes/auth');
 const vehicleRoutes = require('./routes/vehicles');
@@ -76,9 +72,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/positions', positionRoutes);
 
-// ==========================================
-// ERROR HANDLING
-// ==========================================
+// Error handling
 
 // 404 Handler
 app.use((req, res, next) => {
@@ -99,9 +93,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ==========================================
-// START SERVER
-// ==========================================
+// Server initialization
 
 async function startServer() {
   try {

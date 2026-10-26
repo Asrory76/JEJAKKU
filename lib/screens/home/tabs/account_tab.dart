@@ -269,21 +269,21 @@ class AccountContent extends StatelessWidget {
                   icon: Icons.notifications_none_rounded,
                   title: 'Notifikasi',
                   subtitle: 'Atur peringatan dan status armada',
-                  onTap: () => _showMessage(context, 'Pengaturan notifikasi dibuka.'),
+                  onTap: () => _showNotificationSettings(context),
                 ),
                 const Divider(height: 1, indent: 70),
                 _accountMenu(
                   icon: Icons.security_rounded,
                   title: 'Keamanan Akun',
                   subtitle: 'Kata sandi dan autentikasi',
-                  onTap: () => _showMessage(context, 'Pengaturan keamanan dibuka.'),
+                  onTap: () => _showSecurityDialog(context),
                 ),
                 const Divider(height: 1, indent: 70),
                 _accountMenu(
                   icon: Icons.help_outline_rounded,
                   title: 'Bantuan & Dukungan',
-                  subtitle: 'FAQ dan layanan bantuan',
-                  onTap: () => _showMessage(context, 'Pusat bantuan dibuka.'),
+                  subtitle: 'Panduan penggunaan & FAQ aplikasi',
+                  onTap: () => _showHelpDialog(context),
                 ),
                 const Divider(height: 1, indent: 70),
                 _accountMenu(
@@ -521,5 +521,165 @@ class AccountContent extends StatelessWidget {
   void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showNotificationSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Pengaturan Notifikasi',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Kelola jenis pemberitahuan pelacak GPS armada Anda.',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Peringatan Pergerakan Armada'),
+                subtitle: const Text('Notifikasi ketika kendaraan mulai bergerak'),
+                value: true,
+                activeThumbColor: AppColors.primary,
+                onChanged: (val) {
+                  Navigator.pop(ctx);
+                  _showMessage(context, 'Pengaturan notifikasi diperbarui.');
+                },
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Pengingat Servis Rutin'),
+                subtitle: const Text('Pemberitahuan jadwal ganti oli berkala'),
+                value: true,
+                activeThumbColor: AppColors.primary,
+                onChanged: (val) {
+                  Navigator.pop(ctx);
+                  _showMessage(context, 'Pengaturan pengingat diperbarui.');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSecurityDialog(BuildContext context) {
+    final user = ApiService.currentUser;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Keamanan & Sesi Akun', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Username: ${user?['username'] ?? '-'}'),
+              const SizedBox(height: 6),
+              Text('Email: ${user?['email'] ?? '-'}'),
+              const SizedBox(height: 6),
+              Text('Status Token: ${ApiService.token != null ? 'Tervalidasi (JWT Aktif)' : 'Offline'}'),
+              const SizedBox(height: 12),
+              const Text(
+                'Kata sandi Anda dilindungi enkripsi backend server.',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Tutup'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showHelpDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Bantuan & Panduan Cepat',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '1. Cara Memantau Armada:\nBuka tab Beranda atau Radar GPS, lalu ketuk kendaraan untuk melihat peta rute real-time.\n\n'
+                '2. Menambah Kendaraan Baru:\nGunakan tombol "Tambah Armada" di menu akun atau beranda dengan memasukkan nama dan nomor plat.\n\n'
+                '3. Sinkronisasi Data:\nTekan ikon segarkan di sudut kanan atas untuk memperbarui koordinat terbaru dari server.',
+                style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Tutup Panduan'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

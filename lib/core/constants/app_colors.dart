@@ -11,10 +11,10 @@ class AppColors {
   static const Color surface = Colors.white;
   static const Color canvas = Color.fromARGB(255, 240, 243, 244);
 
-  // Text Colors
+  // Text Colors (Verified WCAG AA compliant >= 4.5:1 on white & background)
   static const Color textPrimary = Color(0xFF172033);
-  static const Color textSecondary = Color(0xFF7B8496);
-  static const Color textMuted = Color(0xFF9AA3B2);
+  static const Color textSecondary = Color(0xFF4A5568);
+  static const Color textMuted = Color(0xFF596780);
 
   // Status & Indicators
   static const Color success = Color(0xFF2ECC71);
