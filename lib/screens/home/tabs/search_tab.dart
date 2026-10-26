@@ -180,34 +180,27 @@ class _SearchContentState extends State<SearchContent> {
 
           const SizedBox(height: 25),
 
-          const Text(
-            'Pencarian Terakhir',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+          if (widget.vehicles.isNotEmpty) ...[
+            const SizedBox(height: 25),
+            const Text(
+              'Armada Terpantau',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
-
-          const SizedBox(height: 12),
-
-          _recentSearch(
-            icon: Icons.location_on_outlined,
-            title: 'Jl. Kaliurang',
-            subtitle: 'Lokasi',
-          ),
-
-          _recentSearch(
-            icon: Icons.location_on_outlined,
-            title: 'Kampus UTY',
-            subtitle: 'Lokasi',
-          ),
-
-          _recentSearch(
-            icon: Icons.two_wheeler_outlined,
-            title: 'Honda Vario 160',
-            subtitle: 'Kendaraan',
-          ),
+            const SizedBox(height: 12),
+            ...widget.vehicles.map(
+              (v) => _recentSearch(
+                icon: v.isMotor
+                    ? Icons.two_wheeler_outlined
+                    : Icons.directions_car_outlined,
+                title: v.name,
+                subtitle: v.plate,
+              ),
+            ),
+          ],
 
           const SizedBox(height: 25),
 

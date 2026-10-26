@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../services/api_service.dart';
 
@@ -160,7 +161,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 const Text(
                   'Daftarkan diri Anda untuk mulai memantau armada',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
 
                 const SizedBox(height: 25),
@@ -367,7 +371,10 @@ class _RegisterPageState extends State<RegisterPage> {
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
+        prefixIcon: const Icon(
+          Icons.lock_outline_rounded,
+          color: AppColors.textMuted,
+        ),
         suffixIcon: IconButton(
           onPressed: onToggle,
           icon: Icon(

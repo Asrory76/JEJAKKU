@@ -17,6 +17,12 @@ class AccountContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String displayName = ApiService.currentUser?['name'] ??
+        ApiService.currentUser?['username'] ??
+        'Pengguna JEJAKKU';
+    final String displayEmail =
+        ApiService.currentUser?['email'] ?? 'Akun GPS Tracker Aktif';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -48,21 +54,21 @@ class AccountContent extends StatelessWidget {
 
                 const SizedBox(width: 15),
 
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Arya Cahyo',
-                        style: TextStyle(
+                        displayName,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 5),
+                      const SizedBox(height: 5),
                       Text(
-                        'Pengguna GPS Tracker',
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                        displayEmail,
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                     ],
                   ),
@@ -96,8 +102,31 @@ class AccountContent extends StatelessWidget {
             ),
             child: Column(
               children: [
-                ...vehicles.asMap().entries.map((entry) {
-                  final Vehicle vehicle = entry.value;
+                if (vehicles.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 18),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.directions_car_outlined,
+                          size: 38,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Belum ada armada terdaftar.',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ...vehicles.asMap().entries.map((entry) {
+                    final Vehicle vehicle = entry.value;
 
                   return Padding(
                     padding: EdgeInsets.only(

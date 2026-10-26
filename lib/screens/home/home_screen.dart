@@ -18,10 +18,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   bool _isLoading = false;
 
-  final List<Vehicle> _vehicles = [
-    const Vehicle(id: 1, name: 'Honda Vario 160', plate: 'AB 1234 XY', isMotor: true),
-    const Vehicle(id: 2, name: 'Toyota Avanza', plate: 'AB 5678 CD', isMotor: false),
-  ];
+  final List<Vehicle> _vehicles = [];
 
   @override
   void initState() {
@@ -33,14 +30,14 @@ class _HomePageState extends State<HomePage> {
     setState(() => _isLoading = true);
     try {
       final fetched = await ApiService.getVehicles();
-      if (mounted && fetched.isNotEmpty) {
+      if (mounted) {
         setState(() {
           _vehicles.clear();
           _vehicles.addAll(fetched);
         });
       }
     } catch (e) {
-      debugPrint('Info: Server fetch failed, using local fallback: $e');
+      debugPrint('Info: Server fetch failed: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -73,6 +70,89 @@ class _HomePageState extends State<HomePage> {
         );
       }
     }
+  }
+
+  void _showAddVehicleDialog() {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController plateController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text(
+            'Tambah Armada',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Masukkan informasi kendaraan yang ingin dipantau.',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Nama Kendaraan',
+                  hintText: 'Contoh: Honda Vario 160',
+                  prefixIcon: const Icon(Icons.two_wheeler_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: plateController,
+                decoration: InputDecoration(
+                  labelText: 'Nomor Kendaraan',
+                  hintText: 'Contoh: AB 1234 XY',
+                  prefixIcon: const Icon(Icons.confirmation_number_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.trim().isEmpty ||
+                    plateController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Nama dan nomor kendaraan wajib diisi.'),
+                    ),
+                  );
+                  return;
+                }
+
+                final Vehicle newVehicle = Vehicle(
+                  name: nameController.text.trim(),
+                  plate: plateController.text.trim().toUpperCase(),
+                  isMotor: true,
+                );
+
+                Navigator.pop(ctx);
+                _addVehicle(newVehicle);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Tambah'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _openTracking(Vehicle vehicle) {
@@ -163,8 +243,13 @@ class _HomePageState extends State<HomePage> {
                 index: _selectedIndex,
                 children: [
                   HomeContent(
-                    vehicle: _vehicles.first,
-                    onTrack: () => _openTracking(_vehicles.first),
+                    vehicle: _vehicles.isNotEmpty ? _vehicles.first : null,
+                    onTrack: () {
+                      if (_vehicles.isNotEmpty) {
+                        _openTracking(_vehicles.first);
+                      }
+                    },
+                    onAddVehicle: _showAddVehicleDialog,
                   ),
                   SearchContent(
                     vehicles: _vehicles,

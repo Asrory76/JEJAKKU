@@ -1,23 +1,131 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/vehicle_model.dart';
+import '../../../services/api_service.dart';
 
 class HomeContent extends StatelessWidget {
-  final Vehicle vehicle;
+  final Vehicle? vehicle;
   final VoidCallback onTrack;
+  final VoidCallback onAddVehicle;
 
-  const HomeContent({super.key, required this.vehicle, required this.onTrack});
+  const HomeContent({
+    super.key,
+    required this.vehicle,
+    required this.onTrack,
+    required this.onAddVehicle,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final String userName = ApiService.currentUser?['name'] ??
+        ApiService.currentUser?['username'] ??
+        '';
+    final String greeting = userName.isNotEmpty
+        ? 'Selamat Datang, $userName 👋'
+        : 'Selamat Datang 👋';
+
+    if (vehicle == null) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              greeting,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              'Pantau kendaraanmu dengan mudah dan aman.',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 25),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(26),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 15,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.two_wheeler_rounded,
+                      color: AppColors.primary,
+                      size: 40,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Belum Ada Armada Terdaftar',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Akun Anda belum memiliki kendaraan yang dipantau. Tambahkan armada pertama Anda sekarang.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: onAddVehicle,
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text(
+                        'Tambah Armada Pertama',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final currentVehicle = vehicle!;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Selamat Datang 👋',
-            style: TextStyle(
+          Text(
+            greeting,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -62,7 +170,7 @@ class HomeContent extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      vehicle.isMotor
+                      currentVehicle.isMotor
                           ? Icons.two_wheeler_rounded
                           : Icons.directions_car_rounded,
                       color: AppColors.primary,
@@ -77,7 +185,7 @@ class HomeContent extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          vehicle.name,
+                          currentVehicle.name,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -249,7 +357,7 @@ class HomeContent extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        vehicle.lastPosition?['address'] ??
+                        currentVehicle.lastPosition?['address'] ??
                             'Jl. Malioboro, Yogyakarta',
                         style: const TextStyle(
                           color: Colors.grey,
