@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../services/api_service.dart';
 import '../home/home_screen.dart';
+import 'register_screen.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -143,141 +144,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _showRegisterDialog() {
-    final TextEditingController regUser = TextEditingController();
-    final TextEditingController regEmail = TextEditingController();
-    final TextEditingController regPass = TextEditingController();
-    final TextEditingController regName = TextEditingController();
-    bool isSubmitting = false;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Daftar Akun Baru'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: regName,
-                      decoration: const InputDecoration(
-                        labelText: 'Nama Lengkap',
-                        prefixIcon: Icon(Icons.badge_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: regUser,
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: regEmail,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: regPass,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting ? null : () => Navigator.pop(context),
-                  child: const Text('Batal'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: isSubmitting
-                      ? null
-                      : () async {
-                          if (regUser.text.trim().isEmpty ||
-                              regEmail.text.trim().isEmpty ||
-                              regPass.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Semua kolom wajib diisi.'),
-                              ),
-                            );
-                            return;
-                          }
-
-                          setDialogState(() => isSubmitting = true);
-
-                          try {
-                            await ApiService.register(
-                              username: regUser.text.trim(),
-                              email: regEmail.text.trim(),
-                              password: regPass.text,
-                              name: regName.text.trim(),
-                            );
-
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              usernameController.text = regUser.text.trim();
-                              passwordController.text = regPass.text;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Pendaftaran berhasil! Silakan klik LOGIN.',
-                                  ),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            }
-                          } catch (err) {
-                            setDialogState(() => isSubmitting = false);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    err
-                                        .toString()
-                                        .replaceAll('Exception: ', ''),
-                                  ),
-                                  backgroundColor: AppColors.danger,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  child: isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text('Daftar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -545,7 +412,20 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         TextButton(
-                          onPressed: _showRegisterDialog,
+                          onPressed: () async {
+                            final registeredUser = await Navigator.push<String>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RegisterPage(),
+                              ),
+                            );
+
+                            if (registeredUser != null &&
+                                registeredUser.isNotEmpty) {
+                              usernameController.text = registeredUser;
+                              passwordController.clear();
+                            }
+                          },
                           child: const Text(
                             'Daftar',
                             style: TextStyle(
