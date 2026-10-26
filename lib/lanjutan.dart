@@ -1,21 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'services/api_service.dart';
 
 // ======================================================
 // MODEL KENDARAAN
 // ======================================================
 
 class Vehicle {
+  final int? id;
   final String name;
   final String plate;
   final bool isMotor;
+  final String status;
+  final Map<String, dynamic>? lastPosition;
 
   const Vehicle({
+    this.id,
     required this.name,
     required this.plate,
     required this.isMotor,
+    this.status = 'connected',
+    this.lastPosition,
   });
+
+  factory Vehicle.fromJson(Map<String, dynamic> json) {
+    return Vehicle(
+      id: json['id'] as int?,
+      name: json['name'] as String? ?? '',
+      plate: json['plate'] as String? ?? '',
+      isMotor: json['isMotor'] == true || json['is_motor'] == 1,
+      status: json['status'] as String? ?? 'connected',
+      lastPosition: json['lastPosition'] as Map<String, dynamic>?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'plate': plate,
+      'isMotor': isMotor,
+      'status': status,
+      'lastPosition': lastPosition,
+    };
+  }
 }
 
 // ======================================================
@@ -31,16 +60,63 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  bool _isLoading = false;
 
   final List<Vehicle> _vehicles = [
-    const Vehicle(name: 'Honda Vario 160', plate: 'AB 1234 XY', isMotor: true),
-    const Vehicle(name: 'Toyota Avanza', plate: 'AB 5678 CD', isMotor: false),
+    const Vehicle(id: 1, name: 'Honda Vario 160', plate: 'AB 1234 XY', isMotor: true),
+    const Vehicle(id: 2, name: 'Toyota Avanza', plate: 'AB 5678 CD', isMotor: false),
   ];
 
-  void _addVehicle(Vehicle vehicle) {
-    setState(() {
-      _vehicles.add(vehicle);
-    });
+  @override
+  void initState() {
+    super.initState();
+    _fetchVehicles();
+  }
+
+  Future<void> _fetchVehicles() async {
+    setState(() => _isLoading = true);
+    try {
+      final fetched = await ApiService.getVehicles();
+      if (mounted && fetched.isNotEmpty) {
+        setState(() {
+          _vehicles.clear();
+          _vehicles.addAll(fetched);
+        });
+      }
+    } catch (e) {
+      debugPrint('Info: Server fetch failed, using default vehicles: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _addVehicle(Vehicle vehicle) async {
+    try {
+      final newVehicle = await ApiService.addVehicle(
+        name: vehicle.name,
+        plate: vehicle.plate,
+        isMotor: vehicle.isMotor,
+      );
+      if (mounted) {
+        setState(() {
+          _vehicles.add(newVehicle);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Armada berhasil disimpan ke database!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _vehicles.add(vehicle);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tersimpan lokal: $e')),
+        );
+      }
+    }
   }
 
   void _openTracking(Vehicle vehicle) {
@@ -103,6 +179,23 @@ class _HomePageState extends State<HomePage> {
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+
+                  const Spacer(),
+
+                  IconButton(
+                    icon: _isLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.sync_rounded, color: Colors.white),
+                    tooltip: 'Sinkronkan Armada dari Server',
+                    onPressed: _isLoading ? null : _fetchVehicles,
                   ),
                 ],
               ),
@@ -608,31 +701,100 @@ class HomeContent extends StatelessWidget {
 // HALAMAN TRACKING
 // ======================================================
 
-class TrackingPage extends StatelessWidget {
+// ======================================================
+// HALAMAN TRACKING
+// ======================================================
+
+class TrackingPage extends StatefulWidget {
   final Vehicle vehicle;
 
   const TrackingPage({super.key, required this.vehicle});
 
-  static const LatLng jogja = LatLng(-7.7956, 110.3695);
+  @override
+  State<TrackingPage> createState() => _TrackingPageState();
+}
+
+class _TrackingPageState extends State<TrackingPage> {
+  static const LatLng jogjaDefault = LatLng(-7.7956, 110.3695);
+  late final MapController _mapController;
+
+  List<LatLng> _route = [
+    const LatLng(-7.7819, 110.3671),
+    const LatLng(-7.7859, 110.3682),
+    const LatLng(-7.7904, 110.3691),
+    const LatLng(-7.7956, 110.3695),
+  ];
+
+  bool _isLoading = false;
+  String _currentAddress = 'Yogyakarta, Indonesia';
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+    _fetchLiveTracking();
+  }
+
+  Future<void> _fetchLiveTracking() async {
+    if (widget.vehicle.id == null) return;
+    setState(() => _isLoading = true);
+    try {
+      final history = await ApiService.getPositionHistory(widget.vehicle.id!);
+      if (history.isNotEmpty && mounted) {
+        final List<LatLng> fetchedPoints = history.map((p) {
+          final lat = (p['lat'] as num).toDouble();
+          final lng = (p['lng'] as num).toDouble();
+          return LatLng(lat, lng);
+        }).toList();
+
+        setState(() {
+          _route = fetchedPoints;
+          final last = history.last;
+          if (last['address'] != null && last['address'].toString().isNotEmpty) {
+            _currentAddress = last['address'].toString();
+          }
+        });
+
+        // Center map to latest position
+        if (_route.isNotEmpty) {
+          _mapController.move(_route.last, 14.5);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching tracking data: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final List<LatLng> route = [
-      const LatLng(-7.7819, 110.3671),
-      const LatLng(-7.7859, 110.3682),
-      const LatLng(-7.7904, 110.3691),
-      const LatLng(-7.7956, 110.3695),
-      const LatLng(-7.8008, 110.3704),
-    ];
+    final LatLng latestPoint = _route.isNotEmpty ? _route.last : jogjaDefault;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF087789),
         foregroundColor: Colors.white,
-        title: const Text(
-          'Lacak Kendaraan',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          'Lacak ${widget.vehicle.name}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
+        actions: [
+          IconButton(
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.refresh_rounded),
+            tooltip: 'Perbarui Posisi GPS',
+            onPressed: _isLoading ? null : _fetchLiveTracking,
+          ),
+        ],
       ),
 
       body: Stack(
@@ -640,10 +802,12 @@ class TrackingPage extends StatelessWidget {
           // ======================================================
           // MAP
           // ======================================================
-
           FlutterMap(
-            options: const MapOptions(initialCenter: jogja, initialZoom: 13.5),
-
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: latestPoint,
+              initialZoom: 14.0,
+            ),
             children: [
               // OPEN STREET MAP
               TileLayer(
@@ -651,22 +815,23 @@ class TrackingPage extends StatelessWidget {
                 userAgentPackageName: 'com.example.gps_tracker',
               ),
 
-              // JALUR SIMULASI
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: route,
-                    strokeWidth: 5,
-                    color: const Color(0xFF087789),
-                  ),
-                ],
-              ),
+              // JALUR RUTE GPS
+              if (_route.length > 1)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _route,
+                      strokeWidth: 5,
+                      color: const Color(0xFF087789),
+                    ),
+                  ],
+                ),
 
-              // MARKER KENDARAAN
+              // MARKER KENDARAAN (POSISI TERAKHIR)
               MarkerLayer(
                 markers: [
                   Marker(
-                    point: route.last,
+                    point: latestPoint,
                     width: 150,
                     height: 90,
                     child: Column(
@@ -687,7 +852,7 @@ class TrackingPage extends StatelessWidget {
                             ],
                           ),
                           child: Text(
-                            vehicle.name,
+                            widget.vehicle.name,
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -706,7 +871,7 @@ class TrackingPage extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            vehicle.isMotor
+                            widget.vehicle.isMotor
                                 ? Icons.two_wheeler_rounded
                                 : Icons.directions_car_rounded,
                             color: Colors.white,
@@ -758,7 +923,7 @@ class TrackingPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(13),
                     ),
                     child: Icon(
-                      vehicle.isMotor
+                      widget.vehicle.isMotor
                           ? Icons.two_wheeler_rounded
                           : Icons.directions_car_rounded,
                       color: const Color(0xFF087789),
@@ -772,7 +937,7 @@ class TrackingPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          vehicle.name,
+                          widget.vehicle.name,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
@@ -782,7 +947,7 @@ class TrackingPage extends StatelessWidget {
                         const SizedBox(height: 3),
 
                         Text(
-                          vehicle.plate,
+                          widget.vehicle.plate,
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 12,
@@ -791,9 +956,27 @@ class TrackingPage extends StatelessWidget {
 
                         const SizedBox(height: 5),
 
-                        const Text(
-                          '● GPS Terhubung • Simulasi Yogyakarta',
-                          style: TextStyle(color: Colors.green, fontSize: 11),
+                        Row(
+                          children: [
+                            const Text(
+                              '● Terhubung ',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                '• $_currentAddress',
+                                style: const TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 11,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
